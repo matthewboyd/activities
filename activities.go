@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	_ "github.com/lib/pq" //for sql
+	"github.com/sony/gobreaker"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -22,9 +23,10 @@ type Activities struct {
 }
 
 type Handler struct {
-	Logger log.Logger
-	Db     sql.DB
-	Redis  redis.Client
+	Logger         log.Logger
+	Db             sql.DB
+	Redis          redis.Client
+	CircuitBreaker *gobreaker.CircuitBreaker
 }
 
 type Weather struct {
