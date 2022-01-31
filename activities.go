@@ -196,15 +196,57 @@ func (h *Handler) NotSunnyEndpoint() func(writer http.ResponseWriter, request *h
 }
 
 func (h *Handler) getNotSunnyActivities(ctx context.Context) string {
+
+	var a Activities
 	var newActivityList []Activities
-	for activitiesNum := range ActivitiesList {
-		if !ActivitiesList[activitiesNum].Sunny {
-			newActivityList = append(newActivityList, ActivitiesList[activitiesNum])
+
+	notSunnyActivitiesQuery := "SELECT * FROM activities where sunny = $1"
+	rows, err := h.Db.Query(notSunnyActivitiesQuery, false)
+	if err != nil {
+		log.Fatalln("An error occurred", err)
+	}
+	for rows.Next() {
+		err = rows.Scan(&a.Name, &a.Postcode, &a.Sunny)
+		if err != nil {
+			log.Fatalln("Error in scanning db rows", err)
 		}
+		newActivityList = append(newActivityList, a)
 	}
 	var discardedActivityList []Activities
 	choosenActivity, _ := h.retrieveActivity(ctx, newActivityList, discardedActivityList, false)
 	return fmt.Sprintf("%s %s", choosenActivity.Name, choosenActivity.Postcode)
+
+	//value, err := h.Redis.Get(ctx, "allWeatherActivities").Result()
+	//if err == redis.Nil {
+	//	var a Activities
+	//	var newActivityList []Activities
+	//
+	//	notSunnyActivitiesQuery := "SELECT * FROM activities where sunny = $1"
+	//	rows, err := h.Db.Query(notSunnyActivitiesQuery, false)
+	//	if err != nil {
+	//		log.Fatalln("An error occurred", err)
+	//	}
+	//	for rows.Next() {
+	//		err = rows.Scan(&a.Name, &a.Postcode, &a.Sunny)
+	//		if err != nil {
+	//			log.Fatalln("Error in scanning db rows", err)
+	//		}
+	//		newActivityList = append(newActivityList, a)
+	//	}
+	//
+	//	h.Redis.Set(ctx, "allWeatherActivites", newActivityList, time.Minute*15)
+	//	var discardedActivityList []Activities
+	//	choosenActivity, _ := h.retrieveActivity(ctx, newActivityList, discardedActivityList, false)
+	//	return fmt.Sprintf("%s %s", choosenActivity.Name, choosenActivity.Postcode), nil
+	//} else if err != nil {
+	//	return "error", err
+	//} else {
+	//	// build response
+	//	var discardedActivityList []Activities
+	//	choosenActivity, _ := h.retrieveActivity(ctx, value, discardedActivityList, false)
+	//	return fmt.Sprintf("%s %s", choosenActivity.Name, choosenActivity.Postcode), nil
+	//	return value, nil
+	//}
 }
 
 func (h *Handler) RemoveIndex(s []Activities, index int) []Activities {
