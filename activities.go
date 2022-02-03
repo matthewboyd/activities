@@ -110,7 +110,7 @@ func (h *Handler) getSunnyActivity(ctx context.Context) string {
 	var newActivityList []Activities
 
 	sunnyActivitiesQuery := "SELECT * FROM activities where sunny = $1"
-	rows, err := h.Db.Query(sunnyActivitiesQuery, true)
+	rows, err := h.Db.QueryContext(ctx, sunnyActivitiesQuery, true)
 	if err != nil {
 		log.Fatalln("An error occurred", err)
 	}
@@ -138,7 +138,7 @@ func (h *Handler) retrieveActivity(ctx context.Context, newActivityList []Activi
 			// we want to call the API
 			weather := choosenActivity.GetWeather()
 
-			err = h.Redis.Set(ctx, choosenActivity.Postcode, weather, time.Minute*10).Err()
+			_ = h.Redis.Set(ctx, choosenActivity.Postcode, weather, time.Minute*10).Err()
 
 			if weather != "Rain" && weather != "Snow" && weather != "Drizzle" {
 				return choosenActivity, nil
@@ -163,7 +163,6 @@ func (h *Handler) retrieveActivity(ctx context.Context, newActivityList []Activi
 	} else {
 		return choosenActivity, nil
 	}
-	return Activities{}, nil
 }
 
 func (a *Activities) GetWeather() string {
