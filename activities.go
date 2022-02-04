@@ -70,7 +70,7 @@ type Weather struct {
 	Timezone int    `json:"timezone"`
 	ID       int    `json:"id"`
 	Name     string `json:"name"`
-	Cod      int    `json:"cod"`
+	Cod      string `json:"cod"`
 }
 
 func (h *Handler) SunnyEndpoint() func(writer http.ResponseWriter, request *http.Request) {
