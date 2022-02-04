@@ -5,8 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis/v8"
-	_ "github.com/jackc/pgx" //for sql
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx" //for sql
 	"github.com/sony/gobreaker"
 	"io/ioutil"
 	"log"
@@ -24,7 +23,7 @@ type Activities struct {
 
 type Handler struct {
 	Logger         log.Logger
-	Db             sqlx.DB
+	Db             pgx.Conn
 	Redis          redis.Client
 	CircuitBreaker *gobreaker.CircuitBreaker
 }
