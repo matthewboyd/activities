@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis/v8"
-	"github.com/jackc/pgx" //for sql
+	"github.com/jackc/pgx/v4/pgxpool" //for sql
 	"github.com/sony/gobreaker"
 	"io/ioutil"
 	"log"
@@ -23,7 +23,7 @@ type Activities struct {
 
 type Handler struct {
 	Logger         log.Logger
-	Db             pgx.Conn
+	Db             pgxpool.Pool
 	Redis          redis.Client
 	CircuitBreaker *gobreaker.CircuitBreaker
 }
@@ -90,7 +90,7 @@ func (h *Handler) getSunnyActivity(ctx context.Context) string {
 	var activityList []Activities
 	var a Activities
 
-	rows, err := h.Db.Query("SELECT * FROM activities where sunny = $1", true)
+	rows, err := h.Db.Query(ctx, "SELECT * FROM activities where sunny = $1", true)
 
 	for rows.Next() {
 		_ = rows.Scan(&a)
@@ -178,7 +178,7 @@ func (h *Handler) getNotSunnyActivities(ctx context.Context) string {
 	var newActivityList []Activities
 
 	notSunnyActivitiesQuery := "SELECT * FROM activities where sunny = $1"
-	rows, err := h.Db.Query(notSunnyActivitiesQuery, false)
+	rows, err := h.Db.Query(ctx, notSunnyActivitiesQuery, false)
 	if err != nil {
 		log.Fatalln("An error occurred", err)
 	}
