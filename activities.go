@@ -70,11 +70,10 @@ type Weather struct {
 	Timezone int    `json:"timezone"`
 	ID       int    `json:"id"`
 	Name     string `json:"name"`
-	Cod      string `json:"cod"`
+	Cod      int    `json:"cod"`
 }
 
 func (h *Handler) SunnyEndpoint() func(writer http.ResponseWriter, request *http.Request) {
-	//h.db.QueryContext()
 	return func(writer http.ResponseWriter, request *http.Request) {
 		startTime := time.Now()
 		writer.WriteHeader(http.StatusOK)
@@ -91,11 +90,17 @@ func (h *Handler) getSunnyActivity(ctx context.Context) string {
 	var a Activities
 
 	rows, err := h.Db.Query(ctx, "SELECT * FROM activities where sunny = $1", true)
-
+	if err != nil {
+		log.Fatalln("an error occurred in the sunny query", err)
+	}
 	for rows.Next() {
-		_ = rows.Scan(&a)
+		err = rows.Scan(&a.Name, &a.Postcode, &a.Sunny)
+		if err != nil {
+			log.Fatalln("Error when scanning the db rows", err)
+		}
 		activityList = append(activityList, a)
 	}
+	log.Println("activityList", activityList)
 	if err != nil {
 		log.Fatalln("An error occurred", err)
 	}
@@ -160,7 +165,6 @@ func (a *Activities) GetWeather() string {
 		log.Fatalln("error unmarshalling response to json", err)
 	}
 	return weather.Weather[0].Main
-
 }
 
 func (h *Handler) NotSunnyEndpoint() func(writer http.ResponseWriter, request *http.Request) {
