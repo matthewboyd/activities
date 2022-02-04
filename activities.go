@@ -88,8 +88,14 @@ func (h *Handler) SunnyEndpoint() func(writer http.ResponseWriter, request *http
 
 func (h *Handler) getSunnyActivity(ctx context.Context) string {
 	var activityList []Activities
+	var a Activities
 
-	err := h.Db.Select(&activityList, "SELECT * FROM activities where sunny = true")
+	rows, err := h.Db.Query("SELECT * FROM activities where sunny = $1", true)
+
+	for rows.Next() {
+		_ = rows.Scan(&a)
+		activityList = append(activityList, a)
+	}
 	if err != nil {
 		log.Fatalln("An error occurred", err)
 	}
