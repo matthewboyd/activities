@@ -3,6 +3,7 @@ package activities
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v4/pgxpool" //for sql
@@ -105,11 +106,14 @@ func (h *Handler) getSunnyActivity(ctx context.Context) string {
 		log.Fatalln("An error occurred", err)
 	}
 	var discardedActivityList []Activities
-	choosenActivity, _ := h.retrieveActivity(ctx, activityList, discardedActivityList, true)
+	choosenActivity, _ := h.retrieveActivity(ctx, activityList, discardedActivityList, true, 0)
 	return fmt.Sprintf("%s %s", choosenActivity.Name, choosenActivity.Postcode)
 }
 
-func (h *Handler) retrieveActivity(ctx context.Context, newActivityList []Activities, discardedActivityList []Activities, sunny bool) (Activities, error) {
+func (h *Handler) retrieveActivity(ctx context.Context, newActivityList []Activities, discardedActivityList []Activities, sunny bool, tries int) (Activities, error) {
+	if tries > 3 {
+		return Activities{}, errors.New("we're having difficulties finding a sunny activity, why not try an allWeather activity")
+	}
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
 	randomNumber := r1.Intn(len(newActivityList))
@@ -128,7 +132,8 @@ func (h *Handler) retrieveActivity(ctx context.Context, newActivityList []Activi
 			} else {
 				discardedActivityList = append(discardedActivityList, choosenActivity)
 				newActivityList = h.RemoveIndex(newActivityList, randomNumber)
-				return h.retrieveActivity(ctx, newActivityList, discardedActivityList, true)
+				tries += 1
+				return h.retrieveActivity(ctx, newActivityList, discardedActivityList, true, tries)
 			}
 		} else if err != nil {
 			return Activities{}, err
@@ -139,7 +144,8 @@ func (h *Handler) retrieveActivity(ctx context.Context, newActivityList []Activi
 			} else {
 				discardedActivityList = append(discardedActivityList, choosenActivity)
 				newActivityList = h.RemoveIndex(newActivityList, randomNumber)
-				return h.retrieveActivity(ctx, newActivityList, discardedActivityList, true)
+				tries += 1
+				return h.retrieveActivity(ctx, newActivityList, discardedActivityList, true, tries)
 			}
 		}
 
@@ -194,7 +200,7 @@ func (h *Handler) getNotSunnyActivities(ctx context.Context) string {
 		newActivityList = append(newActivityList, a)
 	}
 	var discardedActivityList []Activities
-	choosenActivity, _ := h.retrieveActivity(ctx, newActivityList, discardedActivityList, false)
+	choosenActivity, _ := h.retrieveActivity(ctx, newActivityList, discardedActivityList, false, 0)
 	return fmt.Sprintf("%s %s", choosenActivity.Name, choosenActivity.Postcode)
 }
 
