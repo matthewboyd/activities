@@ -94,6 +94,7 @@ func (h *Handler) getSunnyActivity(ctx context.Context) string {
 	if err != nil {
 		log.Fatalln("an error occurred in the sunny query", err)
 	}
+	defer rows.Close()
 	for rows.Next() {
 		err = rows.Scan(&a.Name, &a.Postcode, &a.Sunny)
 		if err != nil {
@@ -132,7 +133,7 @@ func (h *Handler) retrieveActivity(ctx context.Context, newActivityList []Activi
 			} else {
 				discardedActivityList = append(discardedActivityList, choosenActivity)
 				newActivityList = h.RemoveIndex(newActivityList, randomNumber)
-				tries += 1
+				tries++
 				return h.retrieveActivity(ctx, newActivityList, discardedActivityList, true, tries)
 			}
 		} else if err != nil {
@@ -144,7 +145,7 @@ func (h *Handler) retrieveActivity(ctx context.Context, newActivityList []Activi
 			} else {
 				discardedActivityList = append(discardedActivityList, choosenActivity)
 				newActivityList = h.RemoveIndex(newActivityList, randomNumber)
-				tries += 1
+				tries++
 				return h.retrieveActivity(ctx, newActivityList, discardedActivityList, true, tries)
 			}
 		}
@@ -161,6 +162,7 @@ func (a *Activities) GetWeather() string {
 	if err != nil {
 		log.Fatalln("retrieving the weather", err)
 	}
+	defer response.Body.Close()
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		log.Fatalln("retriving the body", err)
@@ -192,6 +194,7 @@ func (h *Handler) getNotSunnyActivities(ctx context.Context) string {
 	if err != nil {
 		log.Fatalln("An error occurred", err)
 	}
+	defer rows.Close()
 	for rows.Next() {
 		err = rows.Scan(&a.Name, &a.Postcode, &a.Sunny)
 		if err != nil {
