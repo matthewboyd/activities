@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v4/pgxpool" //for sql
+	"github.com/matthewboyd/activities/profile"
 	"github.com/sony/gobreaker"
 	"io/ioutil"
 	"log"
@@ -76,13 +77,12 @@ type Weather struct {
 
 func (h *Handler) SunnyEndpoint() func(writer http.ResponseWriter, request *http.Request) {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		startTime := time.Now()
+		defer profile.Duration(time.Now(), "SunnyEndpoint")
 		writer.WriteHeader(http.StatusOK)
 		_, err := writer.Write([]byte(h.getSunnyActivity(request.Context())))
 		if err != nil {
 			log.Fatalln("could not write the bytes")
 		}
-		fmt.Println(time.Since(startTime))
 	}
 }
 
@@ -177,10 +177,9 @@ func (a *Activities) GetWeather() string {
 
 func (h *Handler) NotSunnyEndpoint() func(writer http.ResponseWriter, request *http.Request) {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		startTime := time.Now()
+		defer profile.Duration(time.Now(), "NotSunnyEndpoint")
 		writer.WriteHeader(http.StatusOK)
 		writer.Write([]byte(h.getNotSunnyActivities(request.Context()))) //nolint:errcheck
-		fmt.Println(time.Since(startTime))
 	}
 }
 
